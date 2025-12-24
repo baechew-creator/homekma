@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 도쿄 여행 마스터 대시보드</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --card-bg: #ffffff;
+            --primary-color: #5d5fef;
+            --secondary-color: #ff6b6b;
+            --accent-color: #00d2d3;
+            --border-color: #e0e0e0;
+            --shadow: 0 4px 6px rgba(0,0,0,0.05);
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1a2e;
+            --text-color: #e0e0e0;
+            --card-bg: #16213e;
+            --primary-color: #7b7dff;
+            --secondary-color: #ff8787;
+            --accent-color: #48dbfb;
+            --border-color: #2c3e50;
+            --shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); color: var(--text-color); transition: var(--transition); line-height: 1.6; }
+        
+        /* Header & Nav */
+        header { background: var(--card-bg); padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: var(--shadow); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
+        .theme-toggle { cursor: pointer; font-size: 1.2rem; background: none; border: none; color: var(--text-color); }
+
+        /* Grid Layout */
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+        
+        .card { background: var(--card-bg); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow); transition: var(--transition); display: flex; flex-direction: column; overflow: hidden; }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 15px rgba(0,0,0,0.1); }
+        
+        .col-12 { grid-column: span 12; }
+        .col-8 { grid-column: span 8; }
+        .col-6 { grid-column: span 6; }
+        .col-4 { grid-column: span 4; }
+        .col-3 { grid-column: span 3; }
+
+        @media (max-width: 1024px) { .col-8, .col-6, .col-4, .col-3 { grid-column: span 12; } }
+
+        /* Typography & Elements */
+        h2 { font-size: 1.4rem; margin-bottom: 1rem; border-left: 4px solid var(--primary-color); padding-left: 10px; display: flex; justify-content: space-between; align-items: center; }
+        p { font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-color); opacity: 0.9; text-align: justify; }
+        .badge { background: var(--primary-color); color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; }
+        
+        /* Interactive: Read More Toggle */
+        .read-more-content { max-height: 100px; overflow: hidden; transition: max-height 0.5s ease; position: relative; }
+        .read-more-content.expanded { max-height: 1000px; }
+        .read-more-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-weight: bold; margin-top: 5px; }
+
+        /* Interactive: Checklist */
+        .checklist-item { display: flex; align-items: center; margin-bottom: 0.5rem; cursor: pointer; padding: 0.5rem; border-radius: 6px; transition: var(--transition); }
+        .checklist-item:hover { background-color: rgba(93, 95, 239, 0.1); }
+        .checklist-item input { margin-right: 10px; accent-color: var(--primary-color); transform: scale(1.2); }
+        .checklist-item.checked span { text-decoration: line-through; opacity: 0.6; }
+
+        /* Interactive: Tabs */
+        .tabs { display: flex; gap: 10px; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); }
+        .tab-btn { padding: 0.5rem 1rem; cursor: pointer; border: none; background: none; font-weight: bold; color: var(--text-color); opacity: 0.6; transition: var(--transition); position: relative; }
+        .tab-btn.active { opacity: 1; color: var(--primary-color); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background: var(--primary-color); }
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.9rem; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: rgba(0,0,0,0.03); color: var(--primary-color); }
+        tr:hover { background-color: rgba(93, 95, 239, 0.05); }
+
+        /* Timeline for Itinerary */
+        .timeline { border-left: 2px solid var(--border-color); margin-left: 10px; padding-left: 20px; }
+        .timeline-item { position: relative; margin-bottom: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -26px; top: 5px; width: 10px; height: 10px; background: var(--primary-color); border-radius: 50%; }
+        .timeline-time { font-weight: bold; color: var(--secondary-color); font-size: 0.9rem; }
+        .timeline-title { font-weight: bold; margin: 5px 0; }
+
+        /* Keyframe Animations */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo"><i class="fa-solid fa-plane-departure"></i> 2025 Tokyo Explorer</div>
+        <button class="theme-toggle" onclick="toggleTheme()"><i class="fa-solid fa-moon"></i> Dark Mode</button>
+    </header>
+
+    <div class="container">
+        <!-- 1. Trends & Analysis (Chart) -->
+        <section class="card col-8">
+            <h2><i class="fa-solid fa-chart-line"></i> 2025 여행 트렌드 및 검색 동향 <span class="badge">Analytics</span></h2>
+            <div style="height: 300px; width: 100%;">
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="read-more-container">
+                <div class="read-more-content" id="desc-trend">
+                    <p>
+                        2025년 도쿄 여행은 단순한 관광을 넘어 현지의 실용적인 아이템을 탐색하고 디지털 서비스를 적극 활용하는 '스마트 & 하이퍼 로컬' 형태로 진화하고 있습니다. 구글 트렌드 및 여행 플랫폼 데이터를 분석한 결과, 계절별로 뚜렷한 검색량 변동이 관찰됩니다. 특히 2월(겨울 성수기)과 7월(여름 성수기)에는 여행 필수품과 준비물에 대한 검색량이 연중 최고치를 기록하며, 이는 방학 및 휴가 시즌과 밀접한 관련이 있습니다. 반면 9월은 검색량이 급감하는 비수기로, 인파를 피해 합리적인 가격으로 여유로운 여행을 즐기고자 하는 스마트 여행객들에게 최적의 시기입니다. 
+                        <br><br>
+                        또한, 소비 패턴 분석 결과 2025년의 '3대 쇼핑 카테고리'로 의약품, 생활용품, 화장품이 선정되었습니다. 이는 여행객들이 고가의 명품보다는 일상생활에서 유용하게 쓸 수 있는 실용적인 아이템에 집중하고 있음을 시사합니다. 디지털 활용 측면에서는 구글맵, 파파고뿐만 아니라 현지 예약 앱의 활용도가 급증했습니다. 2025년 12월에는 연말 여행 수요로 인해 준비물 검색량이 전년 대비 70% 이상 폭증할 것으로 예측되므로, 최소 3개월 전 항공권과 숙소 예약을 마치는 것이 필수적입니다.
+                    </p>
+                </div>
+                <button class="read-more-btn" onclick="toggleReadMore('desc-trend')">더 보기 ▼</button>
+            </div>
+        </section>
+
+        <!-- 2. Preparation Checklist (Interactive) -->
+        <section class="card col-4">
+            <h2><i class="fa-solid fa-suitcase"></i> 필수 준비물 체크리스트 <span class="badge">Interactive</span></h2>
+            <div id="checklist-container">
+                <!-- JS will populate this -->
+            </div>
+            <div class="read-more-content expanded">
+                <p style="margin-top: 15px; font-size: 0.85rem;">
+                    * 항목을 클릭하여 완료 상태를 표시하세요. 혼자 떠나는 여행일수록 사전 준비가 안전을 담보합니다. 특히 디지털 기기(eSIM, 보조배터리)는 생존 필수템입니다.
+                </p>
+            </div>
+        </section>
+
+        <!-- 3. Transport Comparison (Chart + Table) -->
+        <section class="card col-6">
+            <h2><i class="fa-solid fa-train"></i> 나리타 공항 교통수단 비교</h2>
+            <canvas id="transportChart" style="max-height: 250px;"></canvas>
+            <table id="transportTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)" style="cursor:pointer">수단 ↕</th>
+                        <th onclick="sortTable(1)" style="cursor:pointer">시간 (분) ↕</th>
+                        <th onclick="sortTable(2)" style="cursor:pointer">요금 (엔) ↕</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>스카이라이너</td><td>41</td><td>2520</td></tr>
+                    <tr><td>나리타 익스프레스</td><td>60</td><td>3070</td></tr>
+                    <tr><td>리무진 버스</td><td>85</td><td>3200</td></tr>
+                    <tr><td>저가 공항 버스</td><td>85</td><td>1500</td></tr>
+                </tbody>
+            </table>
+             <div class="read-more-container">
+                <div class="read-more-content" id="desc-transport">
+                    <p style="margin-top:10px;">
+                        나리타 공항에서 도쿄 시내로 진입하는 방법은 여행자의 목적지와 예산에 따라 극명하게 갈립니다. 데이터 시각화 자료에서 볼 수 있듯, **스카이라이너**는 압도적인 속도(41분)를 자랑하며 우에노나 닛포리 지역 숙박객에게 최고의 선택입니다. 반면, **나리타 익스프레스(N'EX)**는 신주쿠, 시부야, 도쿄역 등 주요 터미널 역으로 환승 없이 이동할 수 있는 편리함이 강점이며, 왕복 할인 티켓을 이용하면 가성비를 높일 수 있습니다.
+                        <br><br>
+                        짐이 많거나 가족 단위 여행객에게는 호텔 문 앞까지 데려다주는 **리무진 버스**가 가장 편안한 선택지입니다. 최근 급부상한 **저가 공항 버스(TYO-NRT 등)**는 편도 1,500엔이라는 파격적인 가격으로 도쿄역이나 긴자까지 이동할 수 있어, 예산을 최우선으로 고려하는 배낭 여행객이나 학생들에게 강력히 추천됩니다. 밤도깨비 여행을 위한 하네다 공항 심야 버스 정보나 택시 이용 팁은 별도의 심야 교통 섹션을 참고하시기 바랍니다.
+                    </p>
+                </div>
+                <button class="read-more-btn" onclick="toggleReadMore('desc-transport')">더 보기 ▼</button>
+            </div>
+        </section>
+
+        <!-- 4. Budget Analysis (Doughnut Chart) -->
+        <section class="card col-6">
+            <h2><i class="fa-solid fa-wallet"></i> 2박 3일 예상 경비 (1인)</h2>
+            <div style="display: flex; align-items: center; justify-content: space-around;">
+                <div style="width: 50%;">
+                    <canvas id="budgetChart"></canvas>
+                </div>
+                <div style="width: 45%;">
+                    <p><strong>총 예상 비용:</strong><br>약 60~90만 원</p>
+                    <ul style="font-size: 0.9rem; list-style: none;">
+                        <li><i class="fa-solid fa-plane"></i> 항공: 30~50만 (가변적)</li>
+                        <li><i class="fa-solid fa-bed"></i> 숙박: 12~20만 (비즈니스)</li>
+                        <li><i class="fa-solid fa-utensils"></i> 식비: 10~15만</li>
+                    </ul>
+                </div>
+            </div>
+             <div class="read-more-container">
+                <div class="read-more-content" id="desc-budget">
+                    <p style="margin-top:10px;">
+                        혼자 떠나는 도쿄 2박 3일 여행은 '선택과 집중'을 통해 예산을 효율적으로 운영할 수 있습니다. 전체 예산의 가장 큰 비중을 차지하는 **항공권**은 특가 프로모션을 활용하면 30만 원 초반대까지 절감 가능하며, 이는 전체 경비를 60만 원대로 낮추는 핵심 요인입니다. **숙소**의 경우 신주쿠나 우에노의 비즈니스 호텔이나 캡슐 호텔을 이용하면 1박 6~8만 원 선에서 쾌적한 휴식이 가능합니다.
+                        <br><br>
+                        **식비**는 편의점과 로컬 식당(규동, 라멘 등)을 적절히 섞으면 하루 5만 원 내외로 충분히 미식을 즐길 수 있습니다. 특히 교통비 절약을 위해 '도쿄 서브웨이 티켓(24/48/72시간)'을 활용하는 것은 필수입니다. 쇼핑 예산은 개인차가 크지만, 드럭스토어와 면세 혜택을 고려하여 약 10만 원 정도의 여유 자금을 준비하는 것이 좋습니다. 현금이 필요한 노포 식당을 위해 일정 금액의 엔화 현찰 준비도 잊지 마세요.
+                    </p>
+                </div>
+                <button class="read-more-btn" onclick="toggleReadMore('desc-budget')">더 보기 ▼</button>
+            </div>
+        </section>
+
+        <!-- 5. 3-Day Itinerary (Tabs) -->
+        <section class="card col-12">
+            <h2><i class="fa-regular fa-calendar-check"></i> 2박 3일 추천 일정 <span class="badge">Perfect Plan</span></h2>
+            <div class="tabs">
+                <button class="tab-btn active" onclick="openTab(event, 'Day1')">1일차: 현대적 도심</button>
+                <button class="tab-btn" onclick="openTab(event, 'Day2')">2일차: 전통 & 트렌드</button>
+                <button class="tab-btn" onclick="openTab(event, 'Day3')">3일차: 힐링 & 쇼핑</button>
+            </div>
+
+            <!-- Day 1 Content -->
+            <div id="Day1" class="tab-content active">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">14:00</div>
+                        <div class="timeline-title">신주쿠 도착 및 체크인</div>
+                        <p>공항에서 이동 후 짐 보관. 모자이크 거리 및 고양이 스크린 관람.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">16:00</div>
+                        <div class="timeline-title">아키하바라 서브컬처 탐방</div>
+                        <p>애니메이션 굿즈, 전자제품 쇼핑 및 메이드 카페 체험 등 이색 문화 경험.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">19:00</div>
+                        <div class="timeline-title">도쿄 도청 무료 전망대</div>
+                        <p>신주쿠의 화려한 야경을 무료로 감상. 날씨가 좋으면 후지산 실루엣 조망 가능.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">21:00</div>
+                        <div class="timeline-title">가부키초 & 오모이데요코초</div>
+                        <p>꼬치구이 골목에서 맥주 한 잔으로 하루 마무리. (호객 행위 주의)</p>
+                    </div>
+                </div>
+                 <p style="margin-top:10px; font-size:0.9rem; color:#666;">
+                    * 1일차 상세: 도쿄의 첫인상은 '압도적인 도시의 활기'여야 합니다. 신주쿠는 교통의 요지이자 쇼핑, 미식, 유흥이 집결된 곳으로 첫 베이스캠프로 최적입니다. 아키하바라와 긴자를 취향에 따라 선택하여 방문하세요.
+                </p>
+            </div>
+
+            <!-- Day 2 Content -->
+            <div id="Day2" class="tab-content">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">09:00</div>
+                        <div class="timeline-title">아사쿠사 센소지</div>
+                        <p>카미나리몬 인증샷 및 나카미세 거리 간식 투어. 오전 방문 추천.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">11:30</div>
+                        <div class="timeline-title">도쿄 스카이트리</div>
+                        <p>일본 최고 높이 전망대에서 파노라마 뷰 감상. 소라마치 쇼핑몰 구경.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">15:00</div>
+                        <div class="timeline-title">하라주쿠 & 오모테산도</div>
+                        <p>다케시타 거리의 크레페와 캣스트리트의 힙한 브랜드 쇼핑.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">18:00</div>
+                        <div class="timeline-title">시부야 스크램블 & 스카이</div>
+                        <p>세계 최대 교차로 횡단 체험 및 시부야 스카이 일몰 감상 (사전 예약 필수).</p>
+                    </div>
+                </div>
+                <p style="margin-top:10px; font-size:0.9rem; color:#666;">
+                    * 2일차 상세: 과거와 현재가 교차하는 일정입니다. 아사쿠사의 전통적인 정취를 느낀 후, 지하철 긴자선을 이용해 시부야/하라주쿠 지역으로 이동하면 동선이 효율적입니다. 시부야 스카이는 2025년 가장 인기 있는 명소이므로 한 달 전 예약이 권장됩니다.
+                </p>
+            </div>
+
+            <!-- Day 3 Content -->
+            <div id="Day3" class="tab-content">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-time">08:00</div>
+                        <div class="timeline-title">츠키지 시장</div>
+                        <p>신선한 스시 조식 및 계란말이 꼬치 등 시장 먹거리 탐방.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">11:00</div>
+                        <div class="timeline-title">오다이바 해변 공원</div>
+                        <p>자유의 여신상, 레인보우 브리지 배경 산책 및 건담 입상 관람.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">14:00</div>
+                        <div class="timeline-title">긴자/도쿄역 라스트 쇼핑</div>
+                        <p>백화점 지하 식품관(데파치카) 선물 구매 및 캐릭터 스트리트 방문.</p>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-time">16:30</div>
+                        <div class="timeline-title">공항 이동</div>
+                        <p>나리타 익스프레스/버스 탑승 (비행기 출발 3시간 전 공항 도착 목표).</p>
+                    </div>
+                </div>
+                 <p style="margin-top:10px; font-size:0.9rem; color:#666;">
+                    * 3일차 상세: 귀국일은 무리한 이동보다 공항 접근성이 좋은 동쪽 지역(츠키지, 긴자, 도쿄역) 위주로 동선을 잡는 것이 안전합니다. 남은 엔화를 소진하기 위한 라스트 쇼핑을 즐기세요.
+                </p>
+            </div>
+        </section>
+
+        <!-- 6. Shopping & Trends (Grid) -->
+        <section class="card col-12">
+            <h2><i class="fa-solid fa-bag-shopping"></i> 2025 쇼핑 핫플레이스 & 아이템</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                <div style="background:rgba(93, 95, 239, 0.05); padding:15px; border-radius:8px;">
+                    <h3 style="font-size:1.1rem; color:var(--primary-color);">💊 드럭스토어 Top 5</h3>
+                    <ul style="padding-left:20px; font-size:0.9rem; margin-top:5px;">
+                        <li>페어아크네 크림 (여드름)</li>
+                        <li>샤론파스/동전파스 (근육통)</li>
+                        <li>메디퀵 H 골드 (두피케어)</li>
+                        <li>로토 골드 40 (안약)</li>
+                        <li>메라노 CC (모공케어)</li>
+                    </ul>
+                </div>
+                <div style="background:rgba(255, 107, 107, 0.05); padding:15px; border-radius:8px;">
+                    <h3 style="font-size:1.1rem; color:var(--secondary-color);">🏬 긴자/명품 쇼핑</h3>
+                    <ul style="padding-left:20px; font-size:0.9rem; margin-top:5px;">
+                        <li>긴자 식스 (트렌디)</li>
+                        <li>미쓰코시 백화점 (전통)</li>
+                        <li>이토야 문구점 (12층 규모)</li>
+                        <li>유니클로 긴자 (플래그십)</li>
+                        <li>무인양품 긴자 (세계 최대)</li>
+                    </ul>
+                </div>
+                <div style="background:rgba(0, 210, 211, 0.05); padding:15px; border-radius:8px;">
+                    <h3 style="font-size:1.1rem; color:var(--accent-color);">🧸 애니/굿즈 성지</h3>
+                    <ul style="padding-left:20px; font-size:0.9rem; margin-top:5px;">
+                        <li>이케부쿠로 아니메이트 (여성향)</li>
+                        <li>아키하바라 라디오회관 (피규어)</li>
+                        <li>나카노 만다라케 (레트로/중고)</li>
+                        <li>포켓몬센터 메가 도쿄</li>
+                        <li>닌텐도 도쿄 (시부야 파르코)</li>
+                    </ul>
+                </div>
+                <div style="background:rgba(255, 159, 67, 0.05); padding:15px; border-radius:8px;">
+                    <h3 style="font-size:1.1rem; color:#ff9f43;">🍶 주류/사케/위스키</h3>
+                    <ul style="padding-left:20px; font-size:0.9rem; margin-top:5px;">
+                        <li>빅카메라 주류코너 (면세+할인)</li>
+                        <li>이세탄 신주쿠 (프리미엄 사케)</li>
+                        <li>야마자키/하쿠슈 위스키 (희귀템)</li>
+                        <li>닷사이 23/39 (선물용 1위)</li>
+                        <li>편의점 산토리 하이볼 캔</li>
+                    </ul>
+                </div>
+            </div>
+             <div class="read-more-container">
+                <div class="read-more-content" id="desc-shopping">
+                    <p style="margin-top:15px;">
+                        2025년 도쿄 쇼핑의 핵심은 **'한정판'**과 **'체험형 매장'**입니다. 문구 덕후라면 긴자의 **이토야(Itoya)**에서 하루 종일 시간을 보낼 수 있으며, 커스텀 노트를 제작하는 '카키모리'도 인기입니다. 애니메이션 팬들에게는 아키하바라뿐만 아니라 **이케부쿠로**가 새로운 성지로 떠올랐으며, 특히 아니메이트 본점은 압도적인 규모를 자랑합니다.
+                        <br><br>
+                        주류 쇼핑의 경우, 엔저 현상으로 인해 한국보다 훨씬 저렴하게 위스키와 사케를 구매할 수 있는 절호의 기회입니다. **빅카메라**나 **돈키호테**의 주류 코너에서는 면세 10%에 추가 할인 쿠폰(3~5%)을 적용받을 수 있어 '닷사이'나 '쿠보타' 같은 명주를 놀라운 가격에 득템할 수 있습니다. 2025년에는 실용성을 중시하는 경향이 강해져 드럭스토어의 의약품(아크네스, 로토 안약 등)과 생활용품(세탁 세제, 섬유 향수)이 쇼핑 바구니의 주역이 되고 있습니다.
+                    </p>
+                </div>
+                <button class="read-more-btn" onclick="toggleReadMore('desc-shopping')">더 보기 ▼</button>
+            </div>
+        </section>
+
+        <!-- 7. Foodie Guide (Cards) -->
+        <section class="card col-8">
+            <h2><i class="fa-solid fa-utensils"></i> 현지인 추천 로컬 맛집</h2>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div class="checklist-item">
+                    <div>
+                        <strong>🍜 이마카츠 (롯폰기)</strong><br>
+                        <span style="font-size:0.8rem; color:#666;">미슐랭 선정 닭가슴살 카츠. 입에서 녹는 부드러움.</span>
+                    </div>
+                </div>
+                <div class="checklist-item">
+                    <div>
+                        <strong>🍲 사토 요스케 (긴자)</strong><br>
+                        <span style="font-size:0.8rem; color:#666;">160년 전통 이나니와 우동. 비단결 같은 목넘김.</span>
+                    </div>
+                </div>
+                <div class="checklist-item">
+                    <div>
+                        <strong>🍖 요시 본점 (시부야)</strong><br>
+                        <span style="font-size:0.8rem; color:#666;">직원이 구워주는 100% 소고기 함바그. 육즙 폭발.</span>
+                    </div>
+                </div>
+                <div class="checklist-item">
+                    <div>
+                        <strong>🥩 샤브타츠 (니시스가모)</strong><br>
+                        <span style="font-size:0.8rem; color:#666;">'고독한 미식가' 출연 스키야키. 가성비 런치.</span>
+                    </div>
+                </div>
+            </div>
+             <p style="margin-top:15px; font-size:0.9rem;">
+                * 팁: 유명 맛집은 '구글 예약'이나 '타베로그'를 통해 사전 예약하는 것이 정신 건강에 이롭습니다. 예약이 어렵다면 오픈런(개점 30분 전 대기)을 노리세요.
+            </p>
+        </section>
+
+        <!-- 8. New Landmark (Hero style) -->
+        <section class="card col-4" style="background: linear-gradient(135deg, var(--card-bg) 0%, rgba(93,95,239,0.1) 100%);">
+            <h2><i class="fa-solid fa-camera"></i> 2025 핫플레이스</h2>
+            <h3 style="font-size:1.5rem; margin:10px 0; color:var(--primary-color);">아자부다이 힐즈 & 팀랩</h3>
+            <p>
+                일본 최고층 빌딩과 녹지의 조화. 
+                모리 빌딩 디지털 아트 뮤지엄(팀랩 보더리스)이 이곳으로 이전했습니다.
+                <br><br>
+                <strong>Point:</strong>
+                <br>- 33층 무료 전망대 (도쿄타워 뷰)
+                <br>- 교토 % 아라비카 커피 입점
+                <br>- 압도적인 디지털 아트 체험
+            </p>
+            <button style="margin-top:auto; padding:10px; background:var(--primary-color); color:white; border:none; border-radius:6px; cursor:pointer;" onclick="alert('공식 홈페이지 예약을 권장합니다!')">예약 꿀팁 확인</button>
+        </section>
+
+        <!-- 9. Important Notice (2026 Tax Change) -->
+        <section class="card col-12" style="border: 2px solid var(--secondary-color);">
+            <h2 style="color:var(--secondary-color);"><i class="fa-solid fa-triangle-exclamation"></i> [중요] 2026년 면세 제도 개편 예고</h2>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <p>
+                        <strong>현재 (2025년):</strong> <span class="badge" style="background:green;">즉시 면세</span><br>
+                        물건 구매 시 여권을 제시하면 소비세(10%)가 제외된 가격으로 바로 결제합니다. 가장 편리한 방식입니다.
+                    </p>
+                </div>
+                <div style="flex: 1; min-width: 300px;">
+                    <p>
+                        <strong>변경 후 (2026년 11월~):</strong> <span class="badge" style="background:var(--secondary-color);">사후 환급</span><br>
+                        세금 포함 가격으로 결제 후, 출국 시 공항에서 환급받는 방식으로 변경됩니다. 공항 대기 시간이 길어질 수 있습니다.
+                    </p>
+                </div>
+            </div>
+            <p style="margin-top: 10px; font-size: 0.9rem; color: #666;">
+                * 배경: 면세품을 일본 내에서 불법으로 되파는 행위를 방지하기 위한 조치입니다. 2025년 여행자들은 마지막 '즉시 면세'의 편리함을 누릴 수 있는 기회입니다.
+            </p>
+        </section>
+
+    </div>
+
+    <script>
+        // 1. Chart Data & Rendering
+        const renderCharts = () => {
+            // Trend Chart
+            new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: ['1월', '2월(성수기)', '3월', '4월', '5월', '6월', '7월(성수기)', '8월', '9월(비수기)', '10월', '11월', '12월'],
+                    datasets: [{
+                        label: '여행 준비물 검색량',
+                        data: [65, 95, 70, 60, 55, 60, 98, 85, 45, 65, 75, 90],
+                        borderColor: '#5d5fef',
+                        backgroundColor: 'rgba(93, 95, 239, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Transport Chart
+            new Chart(document.getElementById('transportChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['스카이라이너', 'N\'EX', '리무진', '저가버스'],
+                    datasets: [{
+                        label: '소요시간(분)',
+                        data: [41, 60, 85, 85],
+                        backgroundColor: '#5d5fef'
+                    }, {
+                        label: '요금(10엔 단위)',
+                        data: [252, 307, 320, 150], // Scaled for visibility
+                        backgroundColor: '#ff6b6b'
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // Budget Chart
+            new Chart(document.getElementById('budgetChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['항공권', '숙소', '식비', '쇼핑/기타', '교통비'],
+                    datasets: [{
+                        data: [40, 20, 15, 15, 10],
+                        backgroundColor: ['#5d5fef', '#ff6b6b', '#00d2d3', '#ff9f43', '#54a0ff']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+        };
+
+        // 2. Checklist Logic
+        const checklistData = [
+            "여권 (유효기간 6개월 이상)",
+            "Visit Japan Web 등록",
+            "포켓 와이파이 / 유심 / eSIM",
+            "110V 돼지코 어댑터",
+            "동전 지갑 (엔화 동전 관리)",
+            "트래블월렛/로그 카드",
+            "보조 배터리 (기내 반입)",
+            "상비약 (소화제, 진통제)",
+            "구글맵 오프라인 지도 다운로드"
+        ];
+
+        const renderChecklist = () => {
+            const container = document.getElementById('checklist-container');
+            container.innerHTML = checklistData.map((item, index) => `
+                <label class="checklist-item" onclick="toggleCheck(this)">
+                    <input type="checkbox">
+                    <span>${item}</span>
+                </label>
+            `).join('');
+        };
+
+        function toggleCheck(element) {
+            element.classList.toggle('checked');
+            const checkbox = element.querySelector('input');
+            checkbox.checked = !checkbox.checked;
+        }
+
+        // 3. Tab Logic
+        function openTab(evt, tabName) {
+            const tabContents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove("active");
+            }
+            const tabBtns = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < tabBtns.length; i++) {
+                tabBtns[i].classList.remove("active");
+            }
+            document.getElementById(tabName).classList.add("active");
+            evt.currentTarget.classList.add("active");
+        }
+
+        // 4. Read More Logic
+        function toggleReadMore(id) {
+            const content = document.getElementById(id);
+            const btn = content.nextElementSibling;
+            content.classList.toggle('expanded');
+            btn.innerText = content.classList.contains('expanded') ? '접기 ▲' : '더 보기 ▼';
+        }
+
+        // 5. Table Sorting
+        function sortTable(n) {
+            const table = document.getElementById("transportTable");
+            let switching = true, shouldSwitch, dir = "asc", switchcount = 0;
+            
+            while (switching) {
+                switching = false;
+                const rows = table.rows;
+                for (let i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    const x = rows[i].getElementsByTagName("TD")[n];
+                    const y = rows[i + 1].getElementsByTagName("TD")[n];
+                    
+                    let xVal = isNaN(x.innerHTML) ? x.innerHTML.toLowerCase() : parseFloat(x.innerHTML);
+                    let yVal = isNaN(y.innerHTML) ? y.innerHTML.toLowerCase() : parseFloat(y.innerHTML);
+
+                    if (dir == "asc") {
+                        if (xVal > yVal) { shouldSwitch = true; break; }
+                    } else if (dir == "desc") {
+                        if (xVal < yVal) { shouldSwitch = true; break; }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+
+        // 6. Theme Toggle
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.querySelector('.theme-toggle');
+            if (body.getAttribute('data-theme') === 'dark') {
+                body.setAttribute('data-theme', 'light');
+                btn.innerHTML = '<i class="fa-solid fa-moon"></i> Dark Mode';
+                // Chart colors update needed in real app, simplistic here
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                btn.innerHTML = '<i class="fa-solid fa-sun"></i> Light Mode';
+            }
+        }
+
+        // Init
+        window.onload = () => {
+            renderCharts();
+            renderChecklist();
+            // Set current date context if needed
+            console.log("Dashboard loaded: " + new Date().toLocaleDateString());
+        };
+    </script>
+</body>
+</html>
