@@ -1,30 +1,22 @@
 # homekma
 
-이 저장소에 있는 주요 HTML 파일을 **웹사이트 형태로 바로 열람할 수 있는 URL**(GitHub Pages 및 raw.githack)을 정리한 문서입니다.
+2025 도쿄 여행 인사이트 대시보드 및 관련 리소스를 정리한 저장소입니다.
+
+## 웹사이트 / 데모
+
+- Tokyo Slide (2025 도쿄 여행 인사이트 대시보드): https://github.com/baechew-creator/homekma/blob/c5b5152eb111eec52b3a6edbbeac7cfd5423c4bb/tokyo_slide.html
+
+> 위 링크는 저장소에 포함된 정적 HTML 파일의 소스(Blob) 링크입니다. 브라우저에서 직접 열어 시각화와 인터랙티브 기능을 확인할 수 있습니다.
+
+## 파일 설명
+
+- `tokyo_slide.html`: 도쿄 여행 대시보드(차트, 체크리스트, 예산 계산기, 쇼핑 리스트 등)를 포함한 정적 HTML 파일입니다.
+
+## 사용 방법
+
+1. 저장소를 클론하거나 위 링크로 HTML 파일을 브라우저에서 직접 엽니다.
+2. 필요한 경우 로컬에서 웹 서버(예: `python -m http.server`)로 실행하면 더 안정적으로 확인할 수 있습니다.
 
 ---
 
-## 웹으로 보기 (추천 순서) 🌐
-
-1. **GitHub Pages (사이트 형태)** — 저장소에서 GitHub Pages를 활성화한 경우 사용하세요.
-   - 사이트 루트: https://baechew-creator.github.io/homekma/
-   - `index.html` (루트): https://baechew-creator.github.io/homekma/
-   - `ai_studio_code (4).html`: https://baechew-creator.github.io/homekma/ai_studio_code%20%284%29.html
-
-2. **raw.githack (즉시 HTML 렌더링 미러)** — GitHub Pages 미활성화 시에도 HTML을 브라우저에서 바로 열람할 수 있습니다.
-   - `index.html`: https://raw.githack.com/baechew-creator/homekma/main/index.html
-   - `ai_studio_code (4).html`: https://raw.githack.com/baechew-creator/homekma/main/ai_studio_code%20%284%29.html
-
-3. **GitHub 파일 뷰 / Raw (코드 확인, 다운로드용)**
-   - `index.html` — GitHub 보기: https://github.com/baechew-creator/homekma/blob/main/index.html  |  Raw: https://raw.githubusercontent.com/baechew-creator/homekma/main/index.html
-   - `ai_studio_code (4).html` — GitHub 보기: https://github.com/baechew-creator/homekma/blob/main/ai_studio_code%20%284%29.html  |  Raw: https://raw.githubusercontent.com/baechew-creator/homekma/main/ai_studio_code%20%284%29.html
-
----
-
-> **참고**: GitHub Pages가 활성화되어 있지 않으면 `github.io` 링크는 404가 됩니다. 그런 경우 **raw.githack** 링크를 사용하면 브라우저에서 즉시 HTML을 확인할 수 있습니다.
-
-> 파일명에 공백이나 괄호가 있는 경우 URL 인코딩(`%20`, `%28`, `%29` 등)이 필요합니다.
-
----
-
-원하시면 이 저장소에 대해 **GitHub Pages 활성화**를 대신 설정해 드리거나(권한 필요), README에 사용법(예: 타깃 브랜치/폴더, custom domain)도 추가하겠습니다.
+(자동으로 README.md 파일을 업데이트했습니다.)
