@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 도쿄 여행 인사이트 대시보드</title>
+    <!-- Chart.js 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome 아이콘 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 1. CSS 변수 및 테마 설정 */
+        :root {
+            --bg-color: #f0f2f5;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --primary: #4e54c8;
+            --secondary: #8f94fb;
+            --accent: #ff6b6b;
+            --border: #ddd;
+            --shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #18191a;
+            --text-color: #e4e6eb;
+            --card-bg: #242526;
+            --primary: #8f94fb;
+            --secondary: #4e54c8;
+            --accent: #ff8787;
+            --border: #3e4042;
+            --shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        /* 2. 기본 스타일 및 폰트 사이즈 요구사항 적용 */
+        * { box-sizing: border-box; transition: background-color 0.3s, color 0.3s; }
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            font-size: 17pt; /* 요구사항: 내용 17pt */
+            line-height: 1.6;
+        }
+
+        /* 헤더 스타일 */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+        }
+
+        h1 { font-size: 28pt; margin: 0; color: var(--primary); }
+        h2 { 
+            font-size: 24pt; /* 요구사항: 제목 24pt */
+            margin-bottom: 20px; 
+            border-left: 5px solid var(--primary); 
+            padding-left: 15px; 
+            color: var(--text-color);
+        }
+        
+        /* 레이아웃 그리드 */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 25px;
+        }
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: var(--shadow);
+            grid-column: span 12;
+        }
+        .col-6 { grid-column: span 6; }
+        .col-4 { grid-column: span 4; }
+
+        @media (max-width: 1200px) { .col-6, .col-4 { grid-column: span 12; } }
+
+        /* 3. 컴포넌트 스타일 */
+        /* 버튼 */
+        button {
+            font-size: 16pt;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            background: var(--primary);
+            color: white;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: scale(1.05); }
+        
+        /* 아코디언 텍스트 */
+        .long-text {
+            max-height: 150px;
+            overflow: hidden;
+            position: relative;
+            font-size: 17pt;
+            text-align: justify;
+        }
+        .long-text.expanded { max-height: none; }
+        .read-more-btn {
+            background: none;
+            color: var(--accent);
+            font-weight: bold;
+            padding: 5px 0;
+            font-size: 15pt;
+        }
+
+        /* 테이블 */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 17pt; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { cursor: pointer; background-color: rgba(0,0,0,0.05); }
+        th:hover { background-color: rgba(0,0,0,0.1); }
+
+        /* 탭 */
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+        .tab-btn {
+            background: none; color: var(--text-color); opacity: 0.6;
+            padding: 10px 20px; font-weight: bold;
+        }
+        .tab-btn.active { opacity: 1; border-bottom: 4px solid var(--primary); color: var(--primary); }
+        .tab-content { display: none; animation: fadeIn 0.5s; }
+        .tab-content.active { display: block; }
+
+        /* 체크리스트 */
+        .progress-bar-container { width: 100%; background: #ddd; height: 15px; border-radius: 10px; margin: 15px 0; overflow: hidden; }
+        .progress-bar { height: 100%; background: var(--accent); width: 0%; transition: width 0.3s; }
+        .checklist-item {
+            display: flex; align-items: center; padding: 10px;
+            cursor: pointer; border-radius: 8px;
+        }
+        .checklist-item:hover { background: rgba(0,0,0,0.05); }
+        .checklist-item input { width: 20px; height: 20px; margin-right: 15px; }
+        .checklist-item.checked span { text-decoration: line-through; color: gray; }
+
+        /* 예산 계산기 */
+        .calc-input {
+            width: 100%; padding: 10px; margin: 5px 0;
+            font-size: 16pt; border: 1px solid var(--border); border-radius: 5px;
+            background: var(--bg-color); color: var(--text-color);
+        }
+        .total-display {
+            font-size: 20pt; font-weight: bold; color: var(--primary);
+            text-align: right; margin-top: 10px;
+        }
+
+        /* 애니메이션 */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 헤더 & 테마 토글 -->
+    <header>
+        <h1><i class="fa-solid fa-plane-departure"></i> 2025 Tokyo Dashboard</h1>
+        <button onclick="toggleTheme()" id="themeBtn">
+            <i class="fa-solid fa-moon"></i> 다크 모드
+        </button>
+    </header>
+
+    <div class="grid-container">
+        
+        <!-- 2. 여행 트렌드 분석 (차트 시각화) -->
+        <div class="card col-8">
+            <h2>📊 2025 여행 검색 트렌드 분석</h2>
+            <div style="height: 300px;">
+                <canvas id="trendChart"></canvas>
+            </div>
+            <div class="long-text" id="desc1">
+                <p>
+                    2025년 도쿄 여행은 단순한 관광을 넘어 현지의 실용적인 아이템을 탐색하고 디지털 서비스를 적극 활용하는 '스마트 & 하이퍼 로컬' 형태로 진화하고 있습니다. 구글 트렌드 및 여행 플랫폼 데이터를 심층 분석한 결과, 계절별로 뚜렷한 검색량 변동이 관찰됩니다. 특히 2월(겨울 성수기)과 7월(여름 성수기)에는 여행 필수품과 준비물에 대한 검색량이 연중 최고치를 기록하며, 이는 방학 및 휴가 시즌과 밀접한 관련이 있습니다. 반면 9월은 검색량이 급감하는 비수기로, 인파를 피해 합리적인 가격으로 여유로운 여행을 즐기기에 최적입니다.<br><br>
+                    또한, 소비 패턴 분석 결과 2025년의 '3대 쇼핑 카테고리'로 의약품, 생활용품, 화장품이 선정되었습니다. 이는 여행객들이 고가의 명품보다는 일상생활에서 유용하게 쓸 수 있는 실용적인 아이템에 집중하고 있음을 시사합니다. 디지털 활용 측면에서는 구글맵, 파파고뿐만 아니라 현지 예약 앱의 활용도가 급증했습니다. 2025년 12월에는 연말 여행 수요로 인해 준비물 검색량이 전년 대비 70% 이상 폭증할 것으로 예측되므로, 최소 3개월 전 항공권과 숙소 예약을 마치는 것이 필수적입니다.
+                </p>
+            </div>
+            <button class="read-more-btn" onclick="toggleText('desc1')">설명 더 보기 ▼</button>
+        </div>
+
+        <!-- 3. 예산 계산기 (인터랙티브 기능) -->
+        <div class="card col-4">
+            <h2>🧮 2박 3일 예산 계산기</h2>
+            <p>항목별 예상 금액을 입력하세요 (단위: 만원)</p>
+            <input type="number" class="calc-input" placeholder="항공권 (예: 40)" oninput="calculateTotal()" id="flight">
+            <input type="number" class="calc-input" placeholder="숙소 (예: 15)" oninput="calculateTotal()" id="hotel">
+            <input type="number" class="calc-input" placeholder="식비/쇼핑 (예: 25)" oninput="calculateTotal()" id="food">
+            <div class="total-display" id="totalBudget">총액: 0 만원</div>
+            <div class="long-text" id="desc2" style="margin-top:15px; font-size: 14pt;">
+                <p>
+                    혼자 떠나는 도쿄 여행은 예산의 유동성이 큽니다. 항공권은 특가 프로모션을 활용하면 30만 원대까지 절감 가능하며, 숙소는 캡슐호텔 이용 시 1박 5만 원 선에서 해결할 수 있습니다. 교통비는 패스를 활용하여 1인당 5만 원 내외로 방어하는 것이 핵심 전략입니다.
+                </p>
+            </div>
+        </div>
+
+        <!-- 4. 준비물 체크리스트 (프로그레스 바) -->
+        <div class="card col-6">
+            <h2>✅ 필수 준비물 체크리스트</h2>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <div id="checklist">
+                <!-- 자바스크립트로 생성됨 -->
+            </div>
+            <div class="long-text" id="desc3" style="margin-top:20px;">
+                <p>
+                    도쿄 여행의 질은 철저한 사전 준비에서 결정됩니다. 특히 여권 유효기간은 반드시 6개월 이상 남아있어야 하며, Visit Japan Web 등록은 입국 시간을 획기적으로 단축시켜 줍니다. 디지털 네이티브 여행자에게 eSIM이나 포켓 와이파이는 생명줄과 같습니다. 현지 전압(110V)을 고려한 돼지코 어댑터와 장시간 도보 여행을 위한 고용량 보조 배터리는 선택이 아닌 필수입니다. 또한, 현금 사용 비중이 여전히 높은 일본의 특성상 동전 지갑을 준비하면 계산대에서의 당황스러움을 피할 수 있습니다. 비상약을 챙기는 센스도 잊지 마세요.
+                </p>
+            </div>
+            <button class="read-more-btn" onclick="toggleText('desc3')">상세 설명 보기 ▼</button>
+        </div>
+
+        <!-- 5. 교통수단 비교 (정렬 가능한 테이블) -->
+        <div class="card col-6">
+            <h2>🚄 나리타 공항 교통 비교</h2>
+            <p style="font-size:14pt; color:gray;">* 헤더를 클릭하여 정렬하세요.</p>
+            <table id="transportTable">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0)">수단 ↕</th>
+                        <th onclick="sortTable(1)">시간(분) ↕</th>
+                        <th onclick="sortTable(2)">요금(엔) ↕</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>스카이라이너</td><td>41</td><td>2520</td></tr>
+                    <tr><td>나리타 익스프레스</td><td>60</td><td>3070</td></tr>
+                    <tr><td>리무진 버스</td><td>85</td><td>3200</td></tr>
+                    <tr><td>저가 버스 (LCB)</td><td>70</td><td>1500</td></tr>
+                </tbody>
+            </table>
+            <div class="long-text" id="desc4" style="margin-top:15px;">
+                <p>
+                    공항 이동 수단 선택은 숙소 위치와 예산에 따라 달라집니다. '스카이라이너'는 우에노/닛포리 지역 숙소 이용 시 가장 빠르고 쾌적한 수단입니다. 반면 신주쿠나 시부야로 한 번에 이동해야 한다면 '나리타 익스프레스(N'EX)'가 유리하며, 왕복 할인 티켓을 이용하면 가성비가 좋아집니다. 짐이 많거나 가족 단위 여행객은 호텔 문 앞까지 가는 '리무진 버스'를, 배낭 여행객이나 가성비를 중시하는 알뜰족은 1,500엔의 파격적인 가격을 자랑하는 '저가 버스'를 이용하여 도쿄역이나 긴자까지 이동하는 것을 추천합니다.
+                </p>
+            </div>
+             <button class="read-more-btn" onclick="toggleText('desc4')">설명 더 보기 ▼</button>
+        </div>
+
+        <!-- 6. 일정표 (탭 기능) -->
+        <div class="card col-12">
+            <h2>🗓️ 2박 3일 추천 일정</h2>
+            <div class="tab-menu">
+                <button class="tab-btn active" onclick="openTab('day1')">1일차: 도심 탐방</button>
+                <button class="tab-btn" onclick="openTab('day2')">2일차: 전통과 힙</button>
+                <button class="tab-btn" onclick="openTab('day3')">3일차: 힐링 & 쇼핑</button>
+            </div>
+
+            <div id="day1" class="tab-content active">
+                <ul>
+                    <li><strong>14:00</strong> 신주쿠 도착 및 체크인 (짐 보관)</li>
+                    <li><strong>16:00</strong> 아키하바라 전자상가 및 서브컬처 탐방</li>
+                    <li><strong>19:00</strong> 도쿄 도청 무료 전망대 야경 감상</li>
+                    <li><strong>21:00</strong> 가부키초 & 오모이데요코초 꼬치 골목</li>
+                </ul>
+                <p class="long-text expanded">
+                    첫날은 도쿄의 현대적인 에너지를 느끼는 일정입니다. 신주쿠는 교통의 요지로 숙소를 잡기에 최적입니다. 무료로 개방되는 도청 전망대에서 도쿄의 스카이라인을 감상한 후, 밤에는 골목의 정취가 살아있는 이자카야에서 여행의 시작을 기념하세요.
+                </p>
+            </div>
+            <div id="day2" class="tab-content">
+                <ul>
+                    <li><strong>09:00</strong> 아사쿠사 센소지 & 나카미세 거리</li>
+                    <li><strong>13:00</strong> 하라주쿠 다케시타 거리 & 오모테산도</li>
+                    <li><strong>16:00</strong> 시부야 스크램블 교차로 & 스카이 전망대</li>
+                    <li><strong>20:00</strong> 시부야 요코초 저녁 식사</li>
+                </ul>
+                <p class="long-text expanded">
+                    과거와 현재가 공존하는 코스입니다. 아침 일찍 아사쿠사의 전통적인 분위기를 만끽하고, 오후에는 일본 패션의 중심지 하라주쿠로 이동합니다. 시부야 스카이는 2025년 가장 핫한 전망대로, 일몰 시간에 맞춰 예약하는 것이 필수입니다.
+                </p>
+            </div>
+            <div id="day3" class="tab-content">
+                <ul>
+                    <li><strong>09:00</strong> 츠키지 시장 조식 (스시, 계란말이)</li>
+                    <li><strong>11:00</strong> 오다이바 해변 공원 산책 & 건담 관람</li>
+                    <li><strong>14:00</strong> 긴자 백화점 쇼핑 및 기념품 구매</li>
+                    <li><strong>17:00</strong> 공항 이동 (출발 3시간 전 도착 권장)</li>
+                </ul>
+                <p class="long-text expanded">
+                    마지막 날은 공항 접근성이 좋은 동쪽 지역 위주로 움직입니다. 츠키지 시장의 신선한 해산물로 아침을 열고, 긴자의 고급스러운 백화점에서 부모님이나 지인을 위한 선물을 구매하며 여행을 마무리합니다.
+                </p>
+            </div>
+        </div>
+
+        <!-- 7. 쇼핑 리스트 (검색 필터 기능) -->
+        <div class="card col-12">
+            <h2>🛍️ 2025 쇼핑 머스트 해브 & 검색</h2>
+            <input type="text" id="searchInput" onkeyup="filterShopping()" placeholder="찾고 싶은 아이템 검색 (예: 약, 과자)" class="calc-input" style="font-size: 16pt; margin-bottom: 20px;">
+            
+            <ul id="shoppingList" style="list-style: none; padding: 0;">
+                <!-- 아이템들이 여기에 들어감 -->
+            </ul>
+
+            <div class="long-text" id="desc5">
+                <p>
+                    2025년 쇼핑의 핵심은 '실용성'과 '제도 변화 대비'입니다. 2026년부터 면세 제도가 '사후 환급'으로 변경될 예정이므로, 2025년은 번거로운 절차 없이 매장에서 즉시 면세 혜택을 받을 수 있는 마지막 골든타임입니다. 드럭스토어에서는 여드름 치료제인 '페어아크네'와 피로 회복에 좋은 '휴족시간'이 부동의 1위입니다. 또한, 주류세가 저렴한 일본 특성상 '산토리 위스키'나 '닷사이 사케'를 구매하는 것이 큰 이득입니다. 긴자의 문구점 '이토야'나 시부야의 '로프트'에서는 한국에 없는 유니크한 디자인 문구를 득템할 수 있습니다.
+                </p>
+            </div>
+            <button class="read-more-btn" onclick="toggleText('desc5')">쇼핑 팁 더 보기 ▼</button>
+        </div>
+
+    </div>
+
+    <!-- 스크립트: 인터랙티브 기능 구현 -->
+    <script>
+        // 1. 테마 토글 기능
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('themeBtn');
+            const isDark = body.getAttribute('data-theme') === 'dark';
+            
+            if (isDark) {
+                body.setAttribute('data-theme', 'light');
+                btn.innerHTML = '<i class="fa-solid fa-moon"></i> 다크 모드';
+            } else {
+                body.setAttribute('data-theme', 'dark');
+                btn.innerHTML = '<i class="fa-solid fa-sun"></i> 라이트 모드';
+            }
+        }
+
+        // 2. Chart.js 차트 렌더링
+        const ctx = document.getElementById('trendChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+                datasets: [{
+                    label: '여행 준비물 검색량',
+                    data: [60, 95, 70, 65, 60, 65, 98, 85, 40, 65, 75, 90],
+                    borderColor: '#4e54c8',
+                    backgroundColor: 'rgba(78, 84, 200, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { font: { size: 16 } } } },
+                scales: { 
+                    y: { ticks: { font: { size: 14 } } },
+                    x: { ticks: { font: { size: 14 } } }
+                }
+            }
+        });
+
+        // 3. 아코디언 (더 보기) 기능
+        function toggleText(id) {
+            const el = document.getElementById(id);
+            el.classList.toggle('expanded');
+            const btn = el.nextElementSibling;
+            btn.innerHTML = el.classList.contains('expanded') ? '설명 접기 ▲' : '상세 설명 보기 ▼';
+        }
+
+        // 4. 체크리스트 및 프로그레스 바
+        const checkItems = [
+            "여권 (유효기간 6개월 이상)", "Visit Japan Web 등록", 
+            "eSIM / 포켓 와이파이 예약", "110V 돼지코 어댑터", 
+            "트래블월렛 카드 환전", "비상약 및 영양제", "보조 배터리"
+        ];
+        const checkContainer = document.getElementById('checklist');
+        
+        checkItems.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'checklist-item';
+            div.innerHTML = `<input type="checkbox" onchange="updateProgress()"><span>${item}</span>`;
+            div.onclick = function(e) {
+                if(e.target.tagName !== 'INPUT') {
+                    const chk = this.querySelector('input');
+                    chk.checked = !chk.checked;
+                    updateProgress();
+                }
+            };
+            checkContainer.appendChild(div);
+        });
+
+        function updateProgress() {
+            const inputs = document.querySelectorAll('.checklist-item input');
+            const checked = document.querySelectorAll('.checklist-item input:checked');
+            const pct = (checked.length / inputs.length) * 100;
+            document.getElementById('progressBar').style.width = pct + '%';
+            
+            // 체크된 항목 스타일 변경
+            inputs.forEach(input => {
+                const parent = input.parentElement;
+                if(input.checked) parent.classList.add('checked');
+                else parent.classList.remove('checked');
+            });
+        }
+
+        // 5. 예산 계산기
+        function calculateTotal() {
+            const f = Number(document.getElementById('flight').value) || 0;
+            const h = Number(document.getElementById('hotel').value) || 0;
+            const fo = Number(document.getElementById('food').value) || 0;
+            const total = f + h + fo;
+            document.getElementById('totalBudget').innerText = `총액: ${total} 만원`;
+        }
+
+        // 6. 테이블 정렬 기능
+        function sortTable(n) {
+            const table = document.getElementById("transportTable");
+            let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            switching = true;
+            dir = "asc"; 
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    let xVal = isNaN(x.innerHTML) ? x.innerHTML : Number(x.innerHTML);
+                    let yVal = isNaN(y.innerHTML) ? y.innerHTML : Number(y.innerHTML);
+                    
+                    if (dir == "asc") {
+                        if (xVal > yVal) { shouldSwitch = true; break; }
+                    } else if (dir == "desc") {
+                        if (xVal < yVal) { shouldSwitch = true; break; }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount ++; 
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+
+        // 7. 탭 전환 기능
+        function openTab(tabName) {
+            const contents = document.getElementsByClassName("tab-content");
+            for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+            
+            const btns = document.getElementsByClassName("tab-btn");
+            for (let i = 0; i < btns.length; i++) btns[i].classList.remove("active");
+            
+            document.getElementById(tabName).classList.add("active");
+            event.currentTarget.classList.add("active");
+        }
+
+        // 8. 쇼핑 리스트 데이터 및 필터링
+        const shopItems = [
+            { name: "페어아크네 크림 W", cat: "의약품/약", desc: "여드름 치료제" },
+            { name: "동전 파스 (로이히)", cat: "의약품/약", desc: "강력한 진통 효과" },
+            { name: "알포트 초콜릿", cat: "과자/간식", desc: "빈츠와 비슷한 맛" },
+            { name: "닛신 컵라면", cat: "간편식", desc: "씨푸드맛 추천" },
+            { name: "휴족시간", cat: "생활용품", desc: "다리 피로 회복" },
+            { name: "닷사이 23 사케", cat: "주류", desc: "선물용 최고급 사케" },
+            { name: "유니클로 히트텍", cat: "의류", desc: "한국보다 저렴" }
+        ];
+
+        const shopListEl = document.getElementById('shoppingList');
+        
+        function renderShopList(items) {
+            shopListEl.innerHTML = '';
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.style.cssText = "padding: 15px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center;";
+                li.innerHTML = `
+                    <div>
+                        <strong style="font-size: 18pt; color: var(--primary);">${item.name}</strong><br>
+                        <span style="font-size: 15pt; color: gray;">${item.cat} | ${item.desc}</span>
+                    </div>
+                    <button onclick="copyToClipboard('${item.name}')" style="font-size: 14pt; padding: 5px 10px; background: var(--secondary);">
+                        <i class="fa-regular fa-copy"></i> 복사
+                    </button>
+                `;
+                shopListEl.appendChild(li);
+            });
+        }
+        renderShopList(shopItems);
+
+        function filterShopping() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = shopItems.filter(item => 
+                item.name.toLowerCase().includes(input) || 
+                item.cat.toLowerCase().includes(input)
+            );
+            renderShopList(filtered);
+        }
+
+        // 9. 클립보드 복사 기능
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert(`'${text}' 복사 완료! 쇼핑 리스트에 메모하세요.`);
+            });
+        }
+
+    </script>
+</body>
+</html>
